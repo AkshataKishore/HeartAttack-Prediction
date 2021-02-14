@@ -1,0 +1,156 @@
+---
+title: "Interpretable XGBoost"
+author: "Akshata Kishore Moharir"
+date: "2/8/2021"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Application of ShapXgboost of Diabetes Prediction:
+
+```{r cars}
+
+suppressPackageStartupMessages({
+library(SHAPforxgboost)
+library(xgboost)
+library(data.table)
+library(ggplot2)
+})
+library(readr)
+diabetes <- read_csv("C:/Users/Nikhil/Desktop/diabetes.csv")
+data<-diabetes
+data$Outcome = as.factor(data$Outcome)
+
+```
+
+```{r pressure, echo=FALSE}
+X1 = as.matrix(data[,-9])
+mod1 = xgboost::xgboost(
+  data = X1, label = data$Outcome, gamma = 0, eta = 1, 
+  lambda = 0,nrounds = 1, verbose = F)
+shap_values <- shap.values(xgb_model = mod1, X_train = X1)
+shap_values$mean_shap_score
+
+```
+
+## Including Plots
+
+```{r pressure, echo=FALSE}
+
+shap_values_Diabetes <- shap_values$shap_score
+
+
+shap_long_Diabetes <- shap.prep(xgb_model = mod1, X_train = X1)
+
+shap_long_Diabetes <- shap.prep(shap_contrib = shap_values_iris, X_train = X1)
+
+```
+
+```{r pressure, echo=FALSE}
+
+shap.plot.summary(shap_long_Diabetes)
+
+shap.plot.summary(shap_long_Diabetes, x_bound  = 1.5, dilute = 10)
+
+shap.plot.summary.wrap1(mod1, X1, top_n = 7)
+
+shap.plot.summary.wrap2(shap_score = shap_values$shap_score, X1, top_n = 3)
+
+shap.plot.summary.wrap2(shap_score = shap_values$shap_score, X1, top_n = 5)
+
+```
+
+```{r pressure, echo=FALSE}
+
+shap.plot.dependence(data_long = shap_long_Diabetes, x="Glucose",
+                           y = "Insulin", color_feature = "BloodPressure")
+
+shap.plot.dependence(data_long = shap_long_Diabetes, x="Glucose",
+                           y = "Insulin", color_feature = "BMI")
+
+shap.plot.dependence(data_long = shap_long_Diabetes, x="Glucose",
+                           y = "Insulin", color_feature = "Age")
+
+```
+
+```{r pressure, echo=FALSE}
+
+shap.plot.dependence(data_long = shap_long_Diabetes, "Insulin")
+
+shap.plot.dependence(data_long = shap_long_Diabetes, "BloodPressure")
+
+shap.plot.dependence(data_long = shap_long_Diabetes, "BMI")
+
+shap.plot.dependence(data_long = shap_long_Diabetes, "Glucose")
+
+shap.plot.dependence(data_long = shap_long_Diabetes, "Age")
+
+```
+
+```{r pressure, echo=FALSE}
+
+mod1 = xgboost::xgboost(
+  data = as.matrix(data[,-9]), label = data$Outcome,
+  gamma = 0, eta = 1, lambda = 0,nrounds = 1, verbose = FALSE)
+
+
+data_int <- shap.prep.interaction(xgb_mod = mod1,
+                                  X_train = as.matrix(data[,-9]))
+
+shap_int <- predict(mod1, as.matrix(data[,-9]), predinteraction = TRUE)
+
+```
+
+```{r pressure, echo=FALSE}
+# **SHAP interaction effect plot **
+shap.plot.dependence(data_long = shap_long_Diabetes,
+                           x="Age",
+                           y = "BMI",
+                           color_feature = "Insulin")
+
+
+shap.plot.dependence(data_long = shap_long_Diabetes,
+                           x="Glucose",
+                           y = "BMI",
+                           color_feature = "BloodPressure")
+
+shap.plot.dependence(data_long = shap_long_Diabetes,
+                           x="Insulin",
+                           y = "BloodPressure",
+                           color_feature = "BMI")
+
+```
+
+
+```{r pressure, echo=FALSE}
+# **SHAP force plot**
+plot_data <- shap.prep.stack.data(shap_contrib = shap_values_Diabetes,
+                                  n_groups = 4)
+
+plot_data1 <- shap.prep.stack.data(shap_contrib = shap_values_Diabetes,
+                                  n_groups = 5)
+
+plot_data2 <- shap.prep.stack.data(shap_contrib = shap_values_Diabetes,
+                                  n_groups = 3)
+
+## Shap force plot 
+shap.plot.force_plot(plot_data)
+shap.plot.force_plot(plot_data1)
+shap.plot.force_plot(plot_data2)
+
+
+# plot by each cluster
+shap.plot.force_plot_bygroup(plot_data)
+
+shap.plot.force_plot_bygroup(plot_data1)
+
+shap.plot.force_plot_bygroup(plot_data2)
+```
